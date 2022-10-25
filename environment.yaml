@@ -1,0 +1,38 @@
+name: cv3d-env
+channels:
+  - pytorch
+dependencies:
+  # System related
+  - python=3.8
+  - pip
+  - build
+  - ipykernel
+  - gcsfs
+  - pyyaml
+  - types-pyyaml
+  # Scipy stack
+  - numpy
+  - matplotlib
+  - scikit-learn
+  - pandas
+  # Deep learning
+  - pytorch
+  - torchvision
+  - cpuonly  # 'cudatoolkit=11.3' if you have a gpu else 'cpuonly'
+  - tensorboard
+  # CV
+  - opencv
+  # Others
+  - tqdm
+  # Testing
+  - pytest
+  - pytest-cov
+  - pytest-mock
+  # Formating, linting
+  - mypy
+  - pylint
+  - black
+  - isort
+  - pip:
+    - torch-tb-profiler
+    - open3d

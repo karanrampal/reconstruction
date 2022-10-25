@@ -1,0 +1,28 @@
+# System related
+build
+gcsfs
+pyyaml
+types-pyyaml
+# Scipy stack
+numpy
+matplotlib
+scikit-learn
+pandas
+# Deep learning
+torch
+torchvision
+tensorboard
+# CV
+opencv-python
+open3d
+# Others
+tqdm
+# Testing
+pytest
+pytest-cov
+pytest-mock
+# Formatiing, linting
+mypy
+pylint
+black
+isort
