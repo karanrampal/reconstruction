@@ -1,4 +1,4 @@
-![Reconstruction](https://github.com/hm-group/reconstruction/actions/workflows/main.yaml/badge.svg)
+![Reconstruction](https://github.com/hm-group/reconstruction/actions/workflows/main.yml/badge.svg)
 
 # Reconstruction
 3D reconstruction from RGBD data
