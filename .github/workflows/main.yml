@@ -1,0 +1,26 @@
+name: Reconstruction
+
+on: [push]
+
+jobs:
+  style_check:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: make install_ci
+      - name: Lint with pylint
+        run: make lint
+      - name: Format using Black, MyPy, iSort
+        run: make format
+      - name: Unit testing
+        run: make test
