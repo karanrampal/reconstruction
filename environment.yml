@@ -37,3 +37,4 @@ dependencies:
   - pip:
     - torch-tb-profiler
     - open3d
+    - pyrealsense2

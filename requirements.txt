@@ -15,6 +15,7 @@ tensorboard
 # CV
 opencv-python
 open3d
+pyrealsense2
 # Others
 tqdm
 # Testing
