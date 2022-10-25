@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-CONDAENV := environment.yaml
+CONDAENV := environment.yml
 
 install: $(CONDAENV)
 	conda env create -f $(CONDAENV)

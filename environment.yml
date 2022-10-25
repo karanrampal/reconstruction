@@ -1,5 +1,6 @@
 name: cv3d-env
 channels:
+  - conda-forge
   - pytorch
 dependencies:
   # System related
