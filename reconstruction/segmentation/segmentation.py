@@ -18,6 +18,10 @@ class Segmentation:
         model = maskrcnn_resnet50_fpn_v2(weights=self.weights, progress=False)
         self.model = model.eval()
 
+    def get_labels(self) -> List[str]:
+        """Get label categories"""
+        return self.weights.meta["categories"]
+
     def _extract(self, arr: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """Extract pixels using mask
         Args:
