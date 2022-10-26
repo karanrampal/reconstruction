@@ -1,5 +1,5 @@
 [MASTER]
 ignore=.ipynb_checkpoints
 
-[MESSAGES CONTROL]
-disable=E1101
+[TYPECHECK]
+generated-members=torch
