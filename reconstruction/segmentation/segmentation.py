@@ -48,7 +48,9 @@ class Segmentation:
         Returns:
             Masked rgb and depth images
         """
-        images = [self.transforms(torch.tensor(img.transpose(2, 0, 1))) for img in rgbs]
+        images = [
+            self.transforms(torch.from_numpy(img.transpose(2, 0, 1))) for img in rgbs
+        ]
         persons, p_depths = [], []
         with torch.no_grad():
             outputs = self.model(images)
