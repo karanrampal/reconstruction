@@ -63,12 +63,12 @@ def main() -> None:
     for serial, path in intrin_files.items():
         data = read_pickle(path)
         tmp = {
-            "fx": data.fx,
-            "fy": data.fy,
-            "height": data.height,
-            "width": data.width,
-            "cx": data.ppx,
-            "cy": data.ppy,
+            "fx": data.fx,  # type: ignore[attr-defined]
+            "fy": data.fy,  # type: ignore[attr-defined]
+            "height": data.height,  # type: ignore[attr-defined]
+            "width": data.width,  # type: ignore[attr-defined]
+            "cx": data.ppx,  # type: ignore[attr-defined]
+            "cy": data.ppy,  # type: ignore[attr-defined]
         }
         out = {serial: tmp}
         write_json(out, path[:-3] + "json")
