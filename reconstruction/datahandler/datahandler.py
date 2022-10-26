@@ -49,7 +49,7 @@ class DataHandler:
 
         return self._filter_serial(data)
 
-    def _load_imgs(self, name: str, mode: str) -> Dict[str, o3d.geometry.Image]:
+    def _load_imgs(self, name: str, mode: str) -> Dict[str, np.ndarray]:
         """Load images helper function
         Args:
             name: Name of person
@@ -60,7 +60,7 @@ class DataHandler:
         path = os.path.join(self.img_path, name, mode)
         paths = [os.path.join(path, fin) for fin in os.listdir(path)]
         imgs = {
-            self._get_serial(img_path): o3d.io.read_image(img_path)
+            self._get_serial(img_path): np.asarray(o3d.io.read_image(img_path))
             for img_path in paths
         }
 
@@ -68,7 +68,7 @@ class DataHandler:
 
     def load_images(
         self, name: str
-    ) -> Tuple[Dict[str, o3d.geometry.Image], Dict[str, o3d.geometry.Image]]:
+    ) -> Tuple[Dict[str, o3d.geometry.Image], Dict[str, np.ndarray]]:
         """Load images
         Args:
             name: Name of person
