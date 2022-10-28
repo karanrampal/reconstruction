@@ -40,6 +40,8 @@ def test_datahandler_load_depth_scales(
     expected: Dict[str, int],
 ) -> None:
     """Unit test for loading depth scales via datahandler"""
+    mocker.patch("os.path.isfile", return_value=True)
+
     test_data = json.dumps(data)
     mocked_open = mocker.mock_open(read_data=test_data)
     mocker.patch("builtins.open", mocked_open)
@@ -47,4 +49,12 @@ def test_datahandler_load_depth_scales(
     dh_ = DataHandler("root", "im_path", "calib_path", cams_to_keep)
     output = dh_.load_depth_scales()
 
-    assert expected == output
+    assert output == expected
+
+
+def test_datahandler_load_depth_scales_no_file(mocker: MockerFixture) -> None:
+    """Unit test for loading depth scales via datahandler when no file exists"""
+    dh_ = DataHandler("root", "im_path", "calib_path", ["cams_to_keep"])
+    output = dh_.load_depth_scales()
+
+    assert output == {}
