@@ -58,7 +58,10 @@ class DataHandler:
             Mapping of camera serial id and image
         """
         path = os.path.join(self.img_path, name, mode)
-        paths = [os.path.join(path, fin) for fin in os.listdir(path)]
+        paths = [os.path.join(path, fin) for fin in os.listdir(path) if ".png" in fin]
+        if not paths:
+            print(f"No .png files in {path}!")
+            return {}
         imgs = {
             self._get_serial(img_path): np.asarray(o3d.io.read_image(img_path))
             for img_path in paths
@@ -82,17 +85,21 @@ class DataHandler:
 
     def load_depth_scales(self) -> Dict[str, float]:
         """Load depth scales for each camera"""
-        data = self._read_json(
-            os.path.join(self.calibration_path, "device_depth_scales.json")
-        )
+        path_ = os.path.join(self.calibration_path, "device_depth_scales.json")
+        if not os.path.isfile(path_):
+            print(f"No {path_} such file!")
+            return {}
+        data = self._read_json(path_)
 
         return data
 
     def load_transformations(self) -> Dict[str, np.ndarray]:
         """Load transformations for each camera exceptht the main camera"""
-        data = self._read_json(
-            os.path.join(self.calibration_path, "transformations.json")
-        )
+        path_ = os.path.join(self.calibration_path, "transformations.json")
+        if not os.path.isfile(path_):
+            print(f"No {path_} such file!")
+            return {}
+        data = self._read_json(path_)
         out = {serial: np.asarray(mat) for serial, mat in data.items()}
 
         return out
@@ -104,6 +111,9 @@ class DataHandler:
             for f in os.listdir(self.calibration_path)
             if "intrinsics.json" in f
         }
+        if not tmp:
+            print(f"No intrinsic files in {self.calibration_path}!")
+            return {}
         intrin_files = self._filter_serial(tmp)
         out = {}
         for serial, path in intrin_files.items():
