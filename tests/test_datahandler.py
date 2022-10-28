@@ -52,7 +52,7 @@ def test_datahandler_load_depth_scales(
     assert output == expected
 
 
-def test_datahandler_load_depth_scales_no_file(mocker: MockerFixture) -> None:
+def test_datahandler_load_depth_scales_no_file() -> None:
     """Unit test for loading depth scales via datahandler when no file exists"""
     dh_ = DataHandler("root", "im_path", "calib_path", ["cams_to_keep"])
     output = dh_.load_depth_scales()
