@@ -1,6 +1,5 @@
 """Segment person from RGBD images"""
 
-
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -13,9 +12,11 @@ class Segmentation:
     """Segment person using maskrcnn"""
 
     def __init__(self) -> None:
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.weights = MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT
         self.transforms = self.weights.transforms()
         model = maskrcnn_resnet50_fpn_v2(weights=self.weights, progress=False)
+        model = model.to(self.device)
         self.model = model.eval()
 
     def get_labels(self) -> List[str]:
@@ -49,13 +50,14 @@ class Segmentation:
             Masked rgb and depth images
         """
         images = [
-            self.transforms(torch.from_numpy(img.transpose(2, 0, 1))) for img in rgbs
+            self.transforms(torch.from_numpy(img.transpose(2, 0, 1)).to(self.device))
+            for img in rgbs
         ]
         persons, p_depths = [], []
         with torch.no_grad():
             outputs = self.model(images)
             for i, dict_ in enumerate(outputs):
-                mask = (dict_["masks"][0].squeeze(0) > thr).numpy()
+                mask = (dict_["masks"][0].squeeze(0) > thr).cpu().numpy()
                 persons.append(self._extract(rgbs[i], mask))
                 if depths:
                     p_depths.append(self._extract(depths[i], mask))
