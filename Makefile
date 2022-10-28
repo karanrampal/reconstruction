@@ -15,15 +15,15 @@ test:
 	pytest -vv --cov --disable-warnings
 
 format:
-	black reconstruction tests
-	isort reconstruction tests
-	mypy reconstruction tests
+	black src tests
+	isort src tests
+	mypy src tests
 
 lint:
-	pylint -j 4 reconstruction tests
+	pylint -j 4 src tests
 
 clean:
-	rm -r __pycache__ .coverage .mypy_cache .pytest_cache *.log .ipynb_checkpoints dist
+	rm -r .coverage .mypy_cache .pytest_cache dist
 
 all: install lint test
 
