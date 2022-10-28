@@ -7,7 +7,7 @@ from typing import Dict, List
 import pytest
 from pytest_mock import MockerFixture
 
-from reconstruction.datahandler.datahandler import DataHandler
+from datahandler.datahandler import DataHandler
 
 
 @pytest.mark.parametrize(
