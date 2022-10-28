@@ -111,3 +111,41 @@ class DataHandler:
             out[serial] = o3d.camera.PinholeCameraIntrinsic(**data[serial])
 
         return out
+
+    def _save_imgs(
+        self,
+        img_list: List[np.ndarray],
+        save_path: str,
+        names: Optional[List[str]] = None,
+    ) -> None:
+        """Save image helper method
+        Args:
+            img_list: List of images
+            save_path: Path to save output
+            names: Names of each file
+        """
+        os.makedirs(save_path, exist_ok=True)
+
+        for i, img in enumerate(img_list):
+            name = names[i] if names else f"{i:06}.png"
+            o3d.io.write_image(os.path.join(save_path, name), o3d.geometry.Image(img))
+
+    def save_images(
+        self,
+        save_path: str,
+        rgb: List[np.ndarray],
+        depth: Optional[List[np.ndarray]] = None,
+        names: Optional[List[str]] = None,
+    ) -> None:
+        """Save images
+        Args:
+            save_path: Path to save output
+            rgb: Color images
+            depth: Depth images
+            names: List of names for each image
+        """
+        path_ = os.path.join(save_path, "color")
+        self._save_imgs(rgb, path_, names)
+        if depth:
+            path_ = os.path.join(save_path, "depth")
+            self._save_imgs(depth, path_, names)
