@@ -1,9 +1,25 @@
 """Utility functions"""
 
-from typing import Dict
+from typing import Dict, List
 
+import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
+
+
+def plot_rgbd(rgb: List[np.ndarray], depth: List[np.ndarray]) -> None:
+    """Plot rgb and d images side by side
+    Args:
+        rgb: List of rgb images to plot
+        depth: List of depth images to plot
+    """
+    num = len(rgb)
+    fig, axi = plt.subplots(num, 2, figsize=(12, num * 3))
+    for i in range(num):
+        axi[i, 0].imshow(rgb[i], cmap="RdBu")
+        cb_ = axi[i, 1].imshow(depth[i], cmap="RdBu")
+        fig.colorbar(cb_, ax=axi[i, 1])
+    fig.tight_layout()
 
 
 def create_point_cloud(
