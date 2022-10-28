@@ -4,8 +4,10 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from torchvision.models.detection import (MaskRCNN_ResNet50_FPN_V2_Weights,
-                                          maskrcnn_resnet50_fpn_v2)
+from torchvision.models.detection import (
+    MaskRCNN_ResNet50_FPN_V2_Weights,
+    maskrcnn_resnet50_fpn_v2,
+)
 
 
 class Segmentation:

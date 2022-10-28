@@ -19,3 +19,6 @@ ignore = [".ipynb_checkpoints"]
 
 [tool.pylint."TYPECHECK"]
 generated-members = ["torch"]
+
+[tool.isort]
+profile = "black"
