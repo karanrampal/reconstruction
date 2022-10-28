@@ -1,12 +1,13 @@
 SHELL := /bin/bash
 CONDAENV := environment.yml
+REQ := requirements.txt
 
 install: $(CONDAENV)
 	conda env create -f $(CONDAENV)
 
-install_ci: requirements.txt
+install_ci: $(REQ)
 	pip install --upgrade pip &&\
-		pip install -r requirements.txt
+		pip install -r $(REQ)
 
 build:
 	python -m build
