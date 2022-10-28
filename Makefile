@@ -23,7 +23,7 @@ lint:
 	pylint -j 4 src tests
 
 clean:
-	rm -r .coverage .mypy_cache .pytest_cache dist
+	rm -r .coverage .mypy_cache .pytest_cache dist src/*.egg-info
 
 all: install lint test
 
