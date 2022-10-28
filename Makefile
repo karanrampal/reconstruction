@@ -24,6 +24,7 @@ lint:
 
 clean:
 	rm -r .coverage .mypy_cache .pytest_cache dist src/*.egg-info
+	find . -name "__pycache__" -exec rm -rf {} +
 
 all: install lint test
 
