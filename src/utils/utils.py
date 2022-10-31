@@ -15,6 +15,8 @@ def plot_rgbd(rgb: List[np.ndarray], depth: List[np.ndarray]) -> None:
     """
     num = len(rgb)
     fig, axi = plt.subplots(num, 2, figsize=(12, num * 3))
+    if num == 1:
+        axi = axi.reshape(1, -1)
     for i in range(num):
         axi[i, 0].imshow(rgb[i], cmap="RdBu")
         cb_ = axi[i, 1].imshow(depth[i], cmap="RdBu")
