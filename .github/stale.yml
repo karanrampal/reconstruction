@@ -1,0 +1,19 @@
+# Configuration for probot-stale - https://github.com/probot/stale
+
+# Number of days of inactivity before an Issue or Pull Request becomes stale
+daysUntilStale: 90
+# Number of days of inactivity before a stale Issue or Pull Request is closed
+daysUntilClose: 30
+# Issues or Pull Requests with these labels will never be considered stale. Set to `[]` to disable
+exemptLabels:
+  - pinned
+  - security
+# Label to use when marking as stale
+staleLabel: wontfix
+# Comment to post when marking as stale. Set to `false` to disable
+markComment: >
+  Is this still relevant? If so, what is blocking it? Is there anything you can do to help move it forward?
+# Comment to post when removing the stale label. Set to `false` to disable
+unmarkComment: false
+# Comment to post when closing a stale Issue or Pull Request. Set to `false` to disable
+closeComment: false
