@@ -47,7 +47,7 @@ class DataHandler:
         with open(path, "r", encoding="utf-8") as fout:
             data = json.load(fout)
 
-        return self._filter_serial(data)
+        return data
 
     def _load_imgs(self, name: str, mode: str) -> Dict[str, np.ndarray]:
         """Load images helper function
@@ -91,7 +91,7 @@ class DataHandler:
             return {}
         data = self._read_json(path_)
 
-        return data
+        return self._filter_serial(data)
 
     def load_transformations(self) -> Dict[str, np.ndarray]:
         """Load transformations for each camera exceptht the main camera"""
@@ -100,7 +100,11 @@ class DataHandler:
             print(f"No {path_} such file!")
             return {}
         data = self._read_json(path_)
-        out = {serial: np.asarray(mat) for serial, mat in data.items()}
+        data_filt = self._filter_serial(data)
+        out = {
+            serial: np.asarray(mat["transformation_matrix"])
+            for serial, mat in data_filt.items()
+        }
 
         return out
 
@@ -118,7 +122,9 @@ class DataHandler:
         out = {}
         for serial, path in intrin_files.items():
             data = self._read_json(path)
-            out[serial] = o3d.camera.PinholeCameraIntrinsic(**data[serial])
+            data["cx"] = data.pop("ppx")
+            data["cy"] = data.pop("ppy")
+            out[serial] = o3d.camera.PinholeCameraIntrinsic(**data)
 
         return out
 
