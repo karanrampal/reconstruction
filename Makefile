@@ -24,7 +24,7 @@ lint:
 	pylint -j 4 src tests
 
 clean:
-	rm -r coverage.xml .mypy_cache .pytest_cache dist src/*.egg-info
+	rm -r coverage.xml .coverage .mypy_cache .pytest_cache dist src/*.egg-info
 	find . -name "__pycache__" -exec rm -r {} +
 
 all: install lint test
