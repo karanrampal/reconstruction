@@ -89,3 +89,27 @@ class PointCloudManip:
         )
         outliers = pcd.select_by_index(inliers, invert=True)
         return outliers
+
+    @classmethod
+    def crop_pcd(
+        cls,
+        pcd: o3d.geometry.PointCloud,
+        min_bound: Tuple[float, float, float],
+        max_bound: Tuple[float, float, float]
+    ) -> o3d.geometry.PointCloud:
+        """Segmentation of a plane from point cloud
+        Args:
+            pcd: Point cloud of scene plus object of interest
+            min_bound: Min bounds for x, y, z
+            max_bound: Max bounds for x, y, z
+        Returns:
+            Cropped point cloud
+        """
+        assert len(min_bound) == 3, "Min bounds for x,y,z required"
+        assert len(max_bound) == 3, "Max bounds for x,y,z required"
+
+        bbox = o3d.geometry.AxisAlignedBoundingBox(
+            min_bound=min_bound,
+            max_bound=max_bound
+        )
+        return pcd.crop(bbox)
