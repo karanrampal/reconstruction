@@ -18,6 +18,13 @@ Next, install the build wheel file as follows,
 pip install <path to wheel file>
 ```
 
+## Download data
+To download a capture use the download data script, it requires the directory to download from gcp as follows,
+```
+gcloud auth login
+./src/download_data.py -d <capture directory path relativeto bucket>
+```
+
 ## Requirements
 I used Anaconda with python3,
 
