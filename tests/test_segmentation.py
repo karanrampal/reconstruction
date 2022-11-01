@@ -5,13 +5,15 @@ import pytest
 
 from segmentation.segmentation import Segmentation
 
+
 def test_segmentation_init() -> None:
     """Test class initilization"""
     seg = Segmentation()
     params = next(seg.model.parameters())
-    
+
     assert not seg.model.training
     assert seg.device == params.device.type
+
 
 def test_apply_mask_exceptions() -> None:
     """Test if improper mask raises error"""
@@ -21,6 +23,7 @@ def test_apply_mask_exceptions() -> None:
     with pytest.raises(AssertionError) as err:
         Segmentation.apply_masks(img, mask)
     assert str(err.value) == "Masks should be 3 dimensional"
+
 
 def test_apply_mask_exception_depth() -> None:
     """Test if importper depth raises error"""
