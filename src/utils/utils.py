@@ -24,43 +24,6 @@ def plot_rgbd(rgb: List[np.ndarray], depth: List[np.ndarray]) -> None:
     fig.tight_layout()
 
 
-def create_point_cloud(
-    rgbs: Dict[str, np.ndarray],
-    depths: Dict[str, np.ndarray],
-    scales: Dict[str, float],
-    transformations: Dict[str, np.ndarray],
-    intrinsics: Dict[str, o3d.camera.PinholeCameraIntrinsic],
-) -> o3d.geometry.PointCloud:
-    """Create point cloud from rgbd images
-    Args:
-        rgbs: RGB images
-        depths: Depth images
-        scales: Depth scales for each camera
-        transformations: Transformations for each camera
-        intrinsics: Camera intrinsics
-    Returns:
-        Point cloud
-    """
-    pcd = o3d.geometry.PointCloud()
-    for serial in depths.keys():
-        color_img = o3d.geometry.Image(rgbs[serial])
-        depth_img = o3d.geometry.Image(depths[serial])
-        intrinsic = intrinsics[serial]
-        transform = transformations.get(serial)
-        rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
-            color_img,
-            depth_img,
-            depth_scale=1 / scales[serial],
-            depth_trunc=4,
-            convert_rgb_to_intensity=False,
-        )
-        pc_ = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
-        if transform is not None:
-            pc_.transform(transform)
-        pcd += pc_
-    return pcd
-
-
 def create_mesh_tsdf(
     rgbs: Dict[str, np.ndarray],
     depths: Dict[str, np.ndarray],
