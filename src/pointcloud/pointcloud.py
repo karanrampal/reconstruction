@@ -95,7 +95,7 @@ class PointCloudManip:
         cls,
         pcd: o3d.geometry.PointCloud,
         min_bound: Tuple[float, float, float],
-        max_bound: Tuple[float, float, float]
+        max_bound: Tuple[float, float, float],
     ) -> o3d.geometry.PointCloud:
         """Segmentation of a plane from point cloud
         Args:
@@ -109,7 +109,6 @@ class PointCloudManip:
         assert len(max_bound) == 3, "Max bounds for x,y,z required"
 
         bbox = o3d.geometry.AxisAlignedBoundingBox(
-            min_bound=min_bound,
-            max_bound=max_bound
+            min_bound=min_bound, max_bound=max_bound
         )
         return pcd.crop(bbox)
