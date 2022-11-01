@@ -11,6 +11,7 @@ MANIFEST
 # Unit test / coverage reports
 .tox/
 .coverage
+coverage.xml
 .pytest_cache/
 
 # Sphinx documentation

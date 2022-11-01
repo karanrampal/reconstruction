@@ -13,7 +13,7 @@ build:
 	python -m build
 
 test:
-	pytest -vv --cov --disable-warnings
+	pytest -vv --cov --disable-warnings --cov-report=xml
 
 format:
 	black src tests
