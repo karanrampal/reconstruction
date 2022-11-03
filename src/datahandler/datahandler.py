@@ -35,11 +35,7 @@ class DataHandler:
     def _filter_serial(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Filter the camera serial id to keep"""
         if self.cams_to_keep:
-            return {
-                serial: val
-                for serial, val in data.items()
-                if serial in self.cams_to_keep
-            }
+            return {serial: val for serial, val in data.items() if serial in self.cams_to_keep}
         return data
 
     def _read_json(self, path: str) -> Dict[str, Any]:
@@ -69,9 +65,7 @@ class DataHandler:
 
         return self._filter_serial(imgs)
 
-    def load_images(
-        self, name: str
-    ) -> Tuple[Dict[str, o3d.geometry.Image], Dict[str, np.ndarray]]:
+    def load_images(self, name: str) -> Tuple[Dict[str, o3d.geometry.Image], Dict[str, np.ndarray]]:
         """Load images
         Args:
             name: Name of person
@@ -102,8 +96,7 @@ class DataHandler:
         data = self._read_json(path_)
         data_filt = self._filter_serial(data)
         out = {
-            serial: np.asarray(mat["transformation_matrix"])
-            for serial, mat in data_filt.items()
+            serial: np.asarray(mat["transformation_matrix"]) for serial, mat in data_filt.items()
         }
 
         return out

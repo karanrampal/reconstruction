@@ -114,9 +114,7 @@ def test_load_transformations(
     assert np.array_equal(out_val, expected)
 
 
-def test_load_intrinsics_no_file(
-    mocker: MockerFixture, capsys: pytest.CaptureFixture
-) -> None:
+def test_load_intrinsics_no_file(mocker: MockerFixture, capsys: pytest.CaptureFixture) -> None:
     """Unit test for loading intrinsics when no file exist in the directory"""
     mocker.patch("os.listdir", return_value=[])
 
@@ -159,6 +157,4 @@ def test_load_intrinsics(
 
     expected = o3d.camera.PinholeCameraIntrinsic(**expect)
 
-    assert np.array_equal(
-        output[cams_to_keep].intrinsic_matrix, expected.intrinsic_matrix
-    )
+    assert np.array_equal(output[cams_to_keep].intrinsic_matrix, expected.intrinsic_matrix)

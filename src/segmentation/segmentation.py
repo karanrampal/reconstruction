@@ -39,9 +39,7 @@ class Segmentation:
         ]
         with torch.no_grad():
             outputs = self.model(images)
-            masks = [
-                (dict_["masks"][0].squeeze(0) > thr).cpu().numpy() for dict_ in outputs
-            ]
+            masks = [(dict_["masks"][0].squeeze(0) > thr).cpu().numpy() for dict_ in outputs]
         return np.stack(masks)
 
     @classmethod
@@ -54,9 +52,7 @@ class Segmentation:
         """Apply masks on the images"""
         assert masks.ndim == 3, "Masks should be 3 dimensional"
         if depths:
-            assert len(depths) == len(
-                rgbs
-            ), "Number of rgb and depth images should be same!"
+            assert len(depths) == len(rgbs), "Number of rgb and depth images should be same!"
 
         rgb_p = np.where(np.expand_dims(masks, -1), np.stack(rgbs), 0)
         if depths:

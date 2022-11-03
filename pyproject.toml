@@ -22,3 +22,6 @@ generated-members = ["torch"]
 
 [tool.isort]
 profile = "black"
+
+[tool.black]
+line-length = 100

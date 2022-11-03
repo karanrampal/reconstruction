@@ -108,7 +108,5 @@ class PointCloudManip:
         assert len(min_bound) == 3, "Min bounds for x,y,z required"
         assert len(max_bound) == 3, "Max bounds for x,y,z required"
 
-        bbox = o3d.geometry.AxisAlignedBoundingBox(
-            min_bound=min_bound, max_bound=max_bound
-        )
+        bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound=min_bound, max_bound=max_bound)
         return pcd.crop(bbox)

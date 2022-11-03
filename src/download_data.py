@@ -14,12 +14,8 @@ def args_parser() -> argparse.Namespace:
     parser.add_argument(
         "-r", "--root", type=str, default="gs://measurement_bucket", help="Bucket name"
     )
-    parser.add_argument(
-        "-d", "--dir_path", type=str, help="Directory to download", required=True
-    )
-    parser.add_argument(
-        "-o", "--out_path", type=str, default="./data", help="Output path"
-    )
+    parser.add_argument("-d", "--dir_path", type=str, help="Directory to download", required=True)
+    parser.add_argument("-o", "--out_path", type=str, default="./data", help="Output path")
 
     return parser.parse_args()
 
@@ -39,9 +35,7 @@ def main() -> None:
     check_call(cmd, shell=True)
 
     print("\nRead json file...")
-    with open(
-        os.path.join(out_path, args.dir_path, "metadata.json"), "r", encoding="utf-8"
-    ) as fin:
+    with open(os.path.join(out_path, args.dir_path, "metadata.json"), "r", encoding="utf-8") as fin:
         data = json.load(fin)
     calibs = data["calibration_blob_name"]
 
