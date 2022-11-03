@@ -44,11 +44,12 @@ class Segmentation:
             ]
         return np.stack(masks)
 
+    @classmethod
     def apply_masks(
-        self,
+        cls,
         rgbs: List[np.ndarray],
         masks: np.ndarray,
-        depths: Optional[List[np.ndarray]],
+        depths: Optional[List[np.ndarray]] = None,
     ) -> Tuple[List[np.ndarray], List[Optional[np.ndarray]]]:
         """Apply masks on the images"""
         assert masks.ndim == 3, "Masks should be 3 dimensional"
