@@ -61,6 +61,11 @@ class PointCloudManip:
         Returns:
             Filtered point cloud of the object of interest
         """
+        if pcd.is_empty():
+            raise ValueError("Point cloud is empty!")
+        if pcd_bg.is_empty():
+            raise ValueError("Background point cloud is empty!")
+
         dists = pcd.compute_point_cloud_distance(pcd_bg)
         dists = np.asarray(dists)
         ind = np.where(dists > thr)[0]
@@ -84,6 +89,9 @@ class PointCloudManip:
         Returns:
             Segmented point cloud
         """
+        if pcd.is_empty():
+            raise ValueError("Point cloud is empty!")
+
         _, inliers = pcd.segment_plane(
             distance_threshold=thr, ransac_n=ransac_n, num_iterations=num_iterations
         )
@@ -105,6 +113,8 @@ class PointCloudManip:
         Returns:
             Cropped point cloud
         """
+        if pcd.is_empty():
+            raise ValueError("Point cloud is empty!")
         assert len(min_bound) == 3, "Min bounds for x,y,z required"
         assert len(max_bound) == 3, "Max bounds for x,y,z required"
 
