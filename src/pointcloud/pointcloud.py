@@ -1,5 +1,6 @@
 """Point cloud manipulation"""
 
+import copy
 from typing import Dict, Tuple
 
 import numpy as np
@@ -120,3 +121,50 @@ class PointCloudManip:
 
         bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound=min_bound, max_bound=max_bound)
         return pcd.crop(bbox)
+
+    @classmethod
+    def rotate_pcd(
+        cls, pcd: o3d.geometry.PointCloud, angles: Tuple[float, float, float]
+    ) -> o3d.geometry.PointCloud:
+        """Rotate point cloud
+        Args:
+            pcd: Point cloud
+            angles: Angles to rotate across x, y, z
+        Returns:
+            Rotated point cloud
+        """
+        rot = pcd.get_rotation_matrix_from_xyz(angles)
+        rot_pcd = copy.deepcopy(pcd)
+        return rot_pcd.rotate(rot)
+
+    @classmethod
+    def pcd_to_rgbd(
+        cls,
+        pcd: o3d.geometry.PointCloud,
+        intrinsic: o3d.camera.PinholeCameraIntrinsic,
+        depth_scale: float,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Convert point cloud to rgb and depth image
+        Args:
+            pcd: Point cloud
+            intrinsic: Camera intrinsic
+            depth_scale: Depth scale
+        Returns:
+            RGBD imagen from point cloud
+        """
+        points = np.asarray(pcd.points)
+
+        f_x, f_y = intrinsic.get_focal_length()
+        c_x, c_y = intrinsic.get_principal_point()
+
+        rgb = np.zeros((intrinsic.height, intrinsic.width, 3))
+        depth = np.zeros((intrinsic.height, intrinsic.width))
+
+        d_vals = points[:, 2] * depth_scale
+        u_vals = ((points[:, 0] * f_x) / points[:, 2] + c_x).astype(np.int16)
+        v_vals = ((points[:, 1] * f_y) / points[:, 2] + c_y).astype(np.int16)
+
+        depth[v_vals, u_vals] = d_vals
+        rgb[v_vals, u_vals, :] = np.asarray(pcd.colors)
+
+        return rgb, depth
