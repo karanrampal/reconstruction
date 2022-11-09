@@ -1,15 +1,13 @@
-name: Reconstruction
+name: CI pipeline
 
 on: [push]
 
 jobs:
   style_check:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.8, 3.9]
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -18,9 +16,41 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: make install_ci
-      - name: Lint with pylint
-        run: make lint
       - name: Format using Black, MyPy, iSort
         run: make format
+      - name: Lint with pylint
+        run: make lint
+
+  sonarqube:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: make install_ci
       - name: Unit testing
         run: make test
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  code_ql:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # Gives permission to read actions.
+      contents: read # Gives permission to read your code.
+      security-events: write # Gives permission to create code scanning alerts.
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Running CodeQL
+        id: run-code-vulnerability-scan
+        if: true # (optional, default: true ), false to skip the template or true to run it.
+        uses: hm-group/cicd-framework-github/actions/security/run-code-vulnerability-scan@v2
