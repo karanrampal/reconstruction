@@ -28,8 +28,10 @@ jobs:
         python-version: [3.8, 3.9]
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          fetch-depth: 0
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: make install_ci
       - name: Unit testing
@@ -48,8 +50,6 @@ jobs:
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Running CodeQL
         id: run-code-vulnerability-scan
         if: true # (optional, default: true ), false to skip the template or true to run it.
