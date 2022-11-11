@@ -24,6 +24,9 @@ def main() -> None:
     """Main function"""
     args = args_parser()
 
+    print("\nAuth login...")
+    check_call("gcloud auth login", shell=True)
+
     print("\nMaking output folder...")
     name_ = "data_" + datetime.today().strftime("%Y-%m-%d")
     out_path = args.out_path + "/" + name_
