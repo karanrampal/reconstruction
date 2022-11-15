@@ -19,6 +19,7 @@ ignore = [".ipynb_checkpoints"]
 
 [tool.pylint."TYPECHECK"]
 generated-members = ["torch"]
+ignored-modules = "open3d"
 
 [tool.isort]
 profile = "black"
