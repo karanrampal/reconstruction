@@ -1,7 +1,7 @@
 """Point cloud manipulation"""
 
 import copy
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import open3d as o3d
@@ -124,7 +124,7 @@ class PointCloudManip:
 
     @classmethod
     def rotate_pcd(
-        cls, pcd: o3d.geometry.PointCloud, angles: Tuple[float, float, float]
+        cls, pcd: o3d.geometry.PointCloud, angles: Union[Tuple[float, float, float], np.ndarray]
     ) -> o3d.geometry.PointCloud:
         """Rotate point cloud
         Args:
@@ -157,14 +157,14 @@ class PointCloudManip:
         f_x, f_y = intrinsic.get_focal_length()
         c_x, c_y = intrinsic.get_principal_point()
 
-        rgb = np.zeros((intrinsic.height, intrinsic.width, 3))
-        depth = np.zeros((intrinsic.height, intrinsic.width))
+        rgb = np.zeros((intrinsic.height, intrinsic.width, 3), dtype=np.float64)
+        depth = np.zeros((intrinsic.height, intrinsic.width), dtype=np.float64)
 
         d_vals = points[:, 2] * depth_scale
         u_vals = ((points[:, 0] * f_x) / points[:, 2] + c_x).astype(np.int16)
         v_vals = ((points[:, 1] * f_y) / points[:, 2] + c_y).astype(np.int16)
 
         depth[v_vals, u_vals] = d_vals
-        rgb[v_vals, u_vals, :] = np.asarray(pcd.colors)
+        rgb[v_vals, u_vals, :] = np.asarray(pcd.colors) if pcd.has_colors() else 1.0
 
         return rgb, depth

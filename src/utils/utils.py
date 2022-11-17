@@ -1,6 +1,6 @@
 """Utility functions"""
 
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,3 +63,44 @@ def create_mesh_tsdf(
     mesh = volume.extract_triangle_mesh()
     mesh.compute_vertex_normals()
     return mesh
+
+
+def cut_geometry(
+    geometry: o3d.geometry.Geometry, cuts: Tuple[Optional[float], Optional[float], Optional[float]]
+) -> Tuple[o3d.geometry.Geometry, o3d.geometry.Geometry]:
+    """Cut geometry along an axis
+    Args:
+        geometry: Open3d mesh or point cloud
+        cuts: Cuts along the x, y, z axis
+    Returns:
+        Two sub geometries
+    """
+    min_bounds = geometry.get_min_bound()
+    max_bounds = geometry.get_max_bound()
+
+    b_max_bound = [y if y is not None else x for x, y in zip(max_bounds, cuts)]
+    f_min_bound = [y if y is not None else x for x, y in zip(min_bounds, cuts)]
+
+    b_bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound=min_bounds, max_bound=b_max_bound)
+    f_bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound=f_min_bound, max_bound=max_bounds)
+
+    back = geometry.crop(b_bbox)
+    front = geometry.crop(f_bbox)
+
+    return front, back
+
+
+def capture_depth_from_camera(
+    geometry: o3d.geometry.Geometry, visualizer: o3d.visualization.Visualizer
+) -> o3d.geometry.Image:
+    """Capture depth image from camera buffer
+    Args:
+        geometry: Open3d geometry such as mesh or point cloud
+        visualizer: Open3d visualizer
+    """
+    visualizer.add_geometry(geometry)
+    visualizer.poll_events()
+    visualizer.update_renderer()
+    depth_img = visualizer.capture_depth_float_buffer()
+    visualizer.clear_geometries()
+    return depth_img
