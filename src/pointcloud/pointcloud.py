@@ -1,7 +1,7 @@
 """Point cloud manipulation"""
 
 import copy
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import open3d as o3d
@@ -124,7 +124,7 @@ class PointCloudManip:
 
     @classmethod
     def rotate_pcd(
-        cls, pcd: o3d.geometry.PointCloud, angles: Tuple[float, float, float]
+        cls, pcd: o3d.geometry.PointCloud, angles: Union[Tuple[float, float, float], np.ndarray]
     ) -> o3d.geometry.PointCloud:
         """Rotate point cloud
         Args:
