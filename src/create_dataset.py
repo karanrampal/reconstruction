@@ -133,6 +133,16 @@ def augment_data(
     return back_depth_img, front_depth_img
 
 
+def save_as_image(im_name: str, image: o3d.geometry.Image) -> None:
+    """Save open3d buffer data as an image
+    Args:
+        im_name: Image name
+        image: Open3d image
+    """
+    img = np.asarray(image).round().astype(np.uint16)
+    cv2.imwrite(im_name, img)
+
+
 def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> None:
     """Create dataset by writing depth images for front, back of a mesh
     Args:
@@ -177,14 +187,8 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
             )
 
             # Save as image
-            cv2.imwrite(
-                os.path.join(out_back_dir, f"{i}_{j}.png"),
-                np.asarray(back_depth_img).round().astype(np.uint16),
-            )
-            cv2.imwrite(
-                os.path.join(out_front_dir, f"{i}_{j}.png"),
-                np.asarray(front_depth_img).round().astype(np.uint16),
-            )
+            save_as_image(os.path.join(out_back_dir, f"{i}_{j}.png"), back_depth_img)
+            save_as_image(os.path.join(out_front_dir, f"{i}_{j}.png"), front_depth_img)
 
     # Save camera parameters
     control = vis.get_view_control().convert_to_pinhole_camera_parameters()
