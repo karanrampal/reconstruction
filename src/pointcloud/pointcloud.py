@@ -171,20 +171,19 @@ class PointCloudManip:
 
     @classmethod
     def remove_hidden_points(
-        cls,
-        pcd: o3d.geometry.PointCloud,
-        locs: np.ndarray,
+        cls, pcd: o3d.geometry.PointCloud, locs: np.ndarray, radius_constant: int = 100
     ) -> Tuple[o3d.geometry.PointCloud, o3d.geometry.PointCloud]:
         """Remove hidden points from a pcd given a camera x, y location
         Args:
             pcd: Point cloud
             locs: X, Y location of camera
+            radius_constant: Constant for radius of spherical projection
         Returns:
             Front and back point clouds
         """
         x_loc, y_loc = locs
         diameter = np.linalg.norm(np.asarray(pcd.get_max_bound()) - np.asarray(pcd.get_min_bound()))
-        _, ind = pcd.hidden_point_removal((x_loc, y_loc, diameter), diameter * 100)
+        _, ind = pcd.hidden_point_removal((x_loc, y_loc, diameter), diameter * radius_constant)
 
         front = pcd.select_by_index(ind)
         back = pcd.select_by_index(ind, invert=True)
