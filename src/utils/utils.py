@@ -1,10 +1,21 @@
 """Utility functions"""
 
-from typing import Dict, List, Optional, Tuple
+import json
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
+
+
+def write_json(file_path: str, data: Dict[str, Any]) -> None:
+    """Write data to a json file
+    Args:
+        file_path: File path
+        data: Data to write
+    """
+    with open(file_path, "w", encoding="utf-8") as fout:
+        json.dump(data, fout)
 
 
 def plot_rgbd(rgb: List[np.ndarray], depth: List[np.ndarray]) -> None:

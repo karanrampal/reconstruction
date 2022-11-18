@@ -3,7 +3,6 @@
 
 import argparse
 import glob
-import json
 import os
 import time
 from pathlib import Path
@@ -78,16 +77,6 @@ def create_synthetic_data_folders(output_dir: str, class_id: str) -> Tuple[str, 
     return out_back_dir, out_front_dir
 
 
-def write_json(file_path: str, data: Dict[str, Any]) -> None:
-    """Write data to a json file
-    Args:
-        file_path: File path
-        data: Data to write
-    """
-    with open(file_path, "w", encoding="utf-8") as fout:
-        json.dump(data, fout)
-
-
 def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraParameters) -> None:
     """Save camera parameters
     Args:
@@ -102,13 +91,13 @@ def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraP
 
     data = {"extrinsics": camera_params.extrinsic.tolist()}
     file_path = os.path.join(output_dir, "extrinsics.json")
-    write_json(file_path, data)
+    utils.write_json(file_path, data)
 
     data = {"height": camera_params.intrinsic.height, "width": camera_params.intrinsic.width}
     data.update(dict(zip(["fx", "fy"], camera_params.intrinsic.get_focal_length())))
     data.update(dict(zip(["cx", "cy"], camera_params.intrinsic.get_principal_point())))
     file_path = os.path.join(output_dir, "intrinsics.json")
-    write_json(file_path, data)
+    utils.write_json(file_path, data)
 
 
 def augment_data(
@@ -128,7 +117,7 @@ def augment_data(
     Returns:
         Front and back depth images
     """
-    # Remove idden points from pcd
+    # Remove hidden points from pcd
     locs = RNG.normal(pcd.get_center()[:2], (std_translate, std_translate), 2)
     front, back = PointCloudManip.remove_hidden_points(pcd, locs, radius_constant)
 
