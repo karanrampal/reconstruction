@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-import cv2
 import numpy as np
 import open3d as o3d
 from numpy.random import MT19937, RandomState, SeedSequence
@@ -33,7 +32,7 @@ def args_parser() -> argparse.Namespace:
     )
     parser.add_argument(
         "-o",
-        "--out_dir",
+        "--output_dir",
         type=str,
         default="output",
         help="Output directory for created datasets",
@@ -41,11 +40,12 @@ def args_parser() -> argparse.Namespace:
     parser.add_argument(
         "-p", "--num_points", type=int, default=20000, help="Number of points to sample from mesh"
     )
-    parser.add_argument("-s", "--num_samples", type=int, default=20, help="Number of augmentations")
+    parser.add_argument("-n", "--num_samples", type=int, default=20, help="Number of augmentations")
+    parser.add_argument("-s", "--scale", type=float, default=12.0, help="Scale depth values")
     parser.add_argument("--height", type=int, default=720, help="Image height")
     parser.add_argument("--width", type=int, default=1280, help="Image width")
     parser.add_argument(
-        "-c", "--std_translate", type=float, default=0.2, help="Standard deviaiton for translation"
+        "-t", "--std_translate", type=float, default=0.2, help="Standard deviaiton for translation"
     )
     parser.add_argument(
         "-a", "--std_angle", type=float, default=0.1, help="Standard deviaiton for rotation"
@@ -60,7 +60,7 @@ def args_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def create_synthetic_data_folders(output_dir: str, class_id: str) -> Tuple[str, str]:
+def create_synthetic_data_folders(output_dir: str) -> str:
     """Create folder structure for synthetic dataset
     Args:
         output_dir: Output directory
@@ -68,16 +68,18 @@ def create_synthetic_data_folders(output_dir: str, class_id: str) -> Tuple[str, 
     Returns:
         Names of the front and back output directories
     """
-    out_back_dir = os.path.join(output_dir, class_id, "back")
-    os.makedirs(out_back_dir, exist_ok=True)
+    output_dir = os.path.join(output_dir, time.strftime("dataset_%Y%m%d-%H%M%S"))
 
-    out_front_dir = os.path.join(output_dir, class_id, "front")
-    os.makedirs(out_front_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "back"), exist_ok=True)
 
-    return out_back_dir, out_front_dir
+    os.makedirs(os.path.join(output_dir, "front"), exist_ok=True)
+
+    return output_dir
 
 
-def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraParameters) -> None:
+def save_camera_params(
+    output_dir: str, camera_params: o3d.camera.PinholeCameraParameters, scale: float
+) -> None:
     """Save camera parameters
     Args:
         output_dir: Output directory
@@ -88,6 +90,10 @@ def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraP
     """
     if not os.path.isdir(output_dir):
         raise ValueError(f"Output directory: {output_dir} does not exist!")
+
+    data = {"depth_scale": scale}
+    file_path = os.path.join(output_dir, "depth_scale.json")
+    utils.write_json(file_path, data)
 
     data = {"extrinsics": camera_params.extrinsic.tolist()}
     file_path = os.path.join(output_dir, "extrinsics.json")
@@ -101,15 +107,13 @@ def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraP
 
 
 def augment_data(
-    visualizer: o3d.visualization.Visualizer,
     pcd: o3d.geometry.PointCloud,
     std_angle: float,
     std_translate: float,
     radius_constant: int,
-) -> Tuple[o3d.geometry.Image, o3d.geometry.Image]:
+) -> Tuple[o3d.geometry.PointCloud, o3d.geometry.PointCloud]:
     """Agment avatar point cloud
     Args:
-        visualizer: Open3d visualizer
         pcd: Point cloud
         std_angle: Standard deviation for rotation
         std_translate: Standard deviation for translation
@@ -123,24 +127,10 @@ def augment_data(
 
     # Random rotate front and back pcds
     angles = RNG.normal(0.0, std_angle, 3)
-    rot_back = PointCloudManip.rotate_pcd(back, angles)
     rot_front = PointCloudManip.rotate_pcd(front, angles)
+    rot_back = PointCloudManip.rotate_pcd(back, angles)
 
-    # Extract image
-    back_depth_img = utils.capture_depth_from_camera(rot_back, visualizer)
-    front_depth_img = utils.capture_depth_from_camera(rot_front, visualizer)
-
-    return back_depth_img, front_depth_img
-
-
-def save_as_image(im_name: str, image: o3d.geometry.Image) -> None:
-    """Save open3d buffer data as an image
-    Args:
-        im_name: Image name
-        image: Open3d image
-    """
-    img = np.asarray(image).round().astype(np.uint16)
-    cv2.imwrite(im_name, img)
+    return rot_front, rot_back
 
 
 def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> None:
@@ -155,22 +145,26 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
             num_points: Number of points in pcd from mesh
             sigma_angle: Standard deviation for rotation
             sigma_cut: Standard deviaiton for cut along x axis
+            scale: Scale depth values for visualization
     Raises:
         Value error if Avatar list is empty
     """
     if not avatar_list:
         raise ValueError("Avatar list is empty!")
 
-    output_dir = os.path.join(params["out_dir"], time.strftime("dataset_%Y%m%d-%H%M%S"))
+    output_dir = create_synthetic_data_folders(params["output_dir"])
 
     vis = o3d.visualization.Visualizer()
     vis.create_window(width=params["width"], height=params["height"], visible=False)
 
-    for i, avatar in enumerate(avatar_list):
+    # Save camera parameters
+    control = vis.get_view_control().convert_to_pinhole_camera_parameters()
+    save_camera_params(output_dir, control, params["scale"])
+
+    for avatar in avatar_list:
         # Create output dirs
         name = Path(avatar).parts[-3] + "_" + os.path.basename(avatar)[:-4]
         print(name)
-        out_back_dir, out_front_dir = create_synthetic_data_folders(output_dir, name)
 
         # Read mesh
         mesh = o3d.io.read_triangle_mesh(avatar)
@@ -182,17 +176,20 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
 
         for j in tqdm(range(params["num_samples"])):
             # Augment avatar
-            back_depth_img, front_depth_img = augment_data(
-                vis, pcd, params["std_angle"], params["std_translate"], params["radius_constant"]
+            front_pcd, back_pcd = augment_data(
+                pcd, params["std_angle"], params["std_translate"], params["radius_constant"]
             )
 
             # Save as image
-            save_as_image(os.path.join(out_back_dir, f"{i}_{j}.png"), back_depth_img)
-            save_as_image(os.path.join(out_front_dir, f"{i}_{j}.png"), front_depth_img)
-
-    # Save camera parameters
-    control = vis.get_view_control().convert_to_pinhole_camera_parameters()
-    save_camera_params(output_dir, control)
+            utils.save_depth_as_image(
+                front_pcd,
+                vis,
+                os.path.join(output_dir, "front", f"{name}_{j}.png"),
+                params["scale"],
+            )
+            utils.save_depth_as_image(
+                back_pcd, vis, os.path.join(output_dir, "back", f"{name}_{j}.png"), params["scale"]
+            )
 
     vis.destroy_window()
 
