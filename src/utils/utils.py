@@ -8,6 +8,13 @@ import numpy as np
 import open3d as o3d
 
 
+def read_json(path: str) -> Dict[str, Any]:
+    """Read json file"""
+    with open(path, "r", encoding="utf-8") as fout:
+        data = json.load(fout)
+    return data
+
+
 def write_json(file_path: str, data: Dict[str, Any]) -> None:
     """Write data to a json file
     Args:

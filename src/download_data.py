@@ -2,10 +2,11 @@
 """Download data from GCP bucket"""
 
 import argparse
-import json
 import os
 from datetime import datetime
 from subprocess import check_call
+
+from utils.utils import read_json
 
 
 def args_parser() -> argparse.Namespace:
@@ -38,8 +39,7 @@ def main() -> None:
     check_call(cmd, shell=True)
 
     print("\nRead json file...")
-    with open(os.path.join(out_path, args.dir_path, "metadata.json"), "r", encoding="utf-8") as fin:
-        data = json.load(fin)
+    data = read_json(os.path.join(out_path, args.dir_path, "metadata.json"))
     calibs = data["calibration_blob_name"]
 
     print("Downloading calibrations...")
