@@ -3,13 +3,11 @@
 
 import argparse
 import glob
-import json
 import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-import cv2
 import numpy as np
 import open3d as o3d
 from numpy.random import MT19937, RandomState, SeedSequence
@@ -26,15 +24,15 @@ def args_parser() -> argparse.Namespace:
     """Argument parser for the CLI"""
     parser = argparse.ArgumentParser(description="CLI for creating synthetic dataset")
     parser.add_argument(
-        "-r",
-        "--root",
+        "-d",
+        "--root_dir",
         type=str,
         default="../datasets/AVATARS",
         help="Root directory for avatars",
     )
     parser.add_argument(
-        "-d",
-        "--out_dir",
+        "-o",
+        "--output_dir",
         type=str,
         default="output",
         help="Output directory for created datasets",
@@ -42,86 +40,97 @@ def args_parser() -> argparse.Namespace:
     parser.add_argument(
         "-p", "--num_points", type=int, default=20000, help="Number of points to sample from mesh"
     )
-    parser.add_argument("-s", "--num_samples", type=int, default=20, help="Number of augmentations")
+    parser.add_argument("-n", "--num_samples", type=int, default=20, help="Number of augmentations")
+    parser.add_argument("-s", "--scale", type=float, default=12.0, help="Scale depth values")
     parser.add_argument("--height", type=int, default=720, help="Image height")
     parser.add_argument("--width", type=int, default=1280, help="Image width")
     parser.add_argument(
-        "-c", "--std_cut", type=float, default=0.2, help="Standard deviaiton for cut along z axis"
+        "-t", "--std_translate", type=float, default=0.2, help="Standard deviaiton for translation"
     )
     parser.add_argument(
         "-a", "--std_angle", type=float, default=0.1, help="Standard deviaiton for rotation"
     )
+    parser.add_argument(
+        "-r",
+        "--radius_constant",
+        type=int,
+        default=1000,
+        help="Constant for radius of spherical projection",
+    )
     return parser.parse_args()
 
 
-def create_synthetic_data_folders(output_dir: str) -> Tuple[str, str, str]:
+def create_synthetic_data_folders(output_dir: str) -> str:
     """Create folder structure for synthetic dataset
     Args:
         output_dir: Output directory
+        class_id: Class id of the avatar
+    Returns:
+        Names of the front and back output directories
     """
-    data_time_str = time.strftime("dataset_%Y%m%d-%H%M%S")
+    output_dir = os.path.join(output_dir, time.strftime("dataset_%Y%m%d-%H%M%S"))
 
-    output_dir = os.path.join(output_dir, data_time_str)
+    os.makedirs(os.path.join(output_dir, "back"), exist_ok=True)
 
-    out_back_dir = os.path.join(output_dir, "back")
-    os.makedirs(out_back_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "front"), exist_ok=True)
 
-    out_front_dir = os.path.join(output_dir, "front")
-    os.makedirs(out_front_dir, exist_ok=True)
-
-    return output_dir, out_back_dir, out_front_dir
+    return output_dir
 
 
-def write_json(file_path: str, data: Dict[str, Any]) -> None:
-    """Write data to a json file
-    Args:
-        file_path: File path
-        data: Data to write
-    """
-    with open(file_path, "w", encoding="utf-8") as fout:
-        json.dump(data, fout)
-
-
-def save_camera_params(output_dir: str, camera_params: o3d.camera.PinholeCameraParameters) -> None:
+def save_camera_params(
+    output_dir: str, camera_params: o3d.camera.PinholeCameraParameters, scale: float
+) -> None:
     """Save camera parameters
     Args:
         output_dir: Output directory
         camera_params: Camera intrinsic and extrinsic matrices
         scale: Depth scale
+    Raises:
+        ValueError if output directory does not exist
     """
+    if not os.path.isdir(output_dir):
+        raise ValueError(f"Output directory: {output_dir} does not exist!")
+
+    data = {"depth_scale": scale}
+    file_path = os.path.join(output_dir, "depth_scale.json")
+    utils.write_json(file_path, data)
+
     data = {"extrinsics": camera_params.extrinsic.tolist()}
     file_path = os.path.join(output_dir, "extrinsics.json")
-    write_json(file_path, data)
+    utils.write_json(file_path, data)
 
     data = {"height": camera_params.intrinsic.height, "width": camera_params.intrinsic.width}
     data.update(dict(zip(["fx", "fy"], camera_params.intrinsic.get_focal_length())))
     data.update(dict(zip(["cx", "cy"], camera_params.intrinsic.get_principal_point())))
     file_path = os.path.join(output_dir, "intrinsics.json")
-    write_json(file_path, data)
+    utils.write_json(file_path, data)
 
 
 def augment_data(
-    visualizer: o3d.visualization.Visualizer,
     pcd: o3d.geometry.PointCloud,
     std_angle: float,
-    std_cut: float,
-) -> Tuple[o3d.geometry.Image, o3d.geometry.Image]:
+    std_translate: float,
+    radius_constant: int,
+) -> Tuple[o3d.geometry.PointCloud, o3d.geometry.PointCloud]:
     """Agment avatar point cloud
     Args:
+        pcd: Point cloud
+        std_angle: Standard deviation for rotation
+        std_translate: Standard deviation for translation
+        radius_constant: Constant for radius of spherical projection
+    Returns:
+        Front and back depth images
     """
-    # Random rotate pcd
+    # Remove hidden points from pcd
+    locs = RNG.normal(pcd.get_center()[:2], (std_translate, std_translate), 2)
+    front, back = PointCloudManip.remove_hidden_points(pcd, locs, radius_constant)
+
+    # Random rotate front and back pcds
     angles = RNG.normal(0.0, std_angle, 3)
-    rot = PointCloudManip.rotate_pcd(pcd, angles)
+    rot_front = PointCloudManip.rotate_pcd(front, angles)
+    rot_back = PointCloudManip.rotate_pcd(back, angles)
 
-    # Random cut geometry along z axis
-    zcut = RNG.normal(rot.get_center()[2], std_cut)
-    front, back = utils.cut_geometry(rot, (None, None, zcut))
-
-    # Extract image
-    back_depth_img = utils.capture_depth_from_camera(back, visualizer)
-    front_depth_img = utils.capture_depth_from_camera(front, visualizer)
-
-    return back_depth_img, front_depth_img
+    return rot_front, rot_back
 
 
 def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> None:
@@ -136,41 +145,50 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
             num_points: Number of points in pcd from mesh
             sigma_angle: Standard deviation for rotation
             sigma_cut: Standard deviaiton for cut along x axis
+            scale: Scale depth values for visualization
+    Raises:
+        Value error if Avatar list is empty
     """
-    # Create output dirs
-    out_dir, out_back_dir, out_front_dir = create_synthetic_data_folders(params["out_dir"])
+    if not avatar_list:
+        raise ValueError("Avatar list is empty!")
+
+    output_dir = create_synthetic_data_folders(params["output_dir"])
 
     vis = o3d.visualization.Visualizer()
     vis.create_window(width=params["width"], height=params["height"], visible=False)
 
+    # Save camera parameters
     control = vis.get_view_control().convert_to_pinhole_camera_parameters()
-    save_camera_params(out_dir, control)
+    save_camera_params(output_dir, control, params["scale"])
 
     for avatar in avatar_list:
+        # Create output dirs
         name = Path(avatar).parts[-3] + "_" + os.path.basename(avatar)[:-4]
         print(name)
+
         # Read mesh
         mesh = o3d.io.read_triangle_mesh(avatar)
         mesh.compute_vertex_normals()
 
         # Convert to pcd
         pcd = mesh.sample_points_uniformly(number_of_points=params["num_points"])
-        rot_pcd = PointCloudManip.rotate_pcd(pcd, (0, 0, -np.pi / 2))
+        pcd = PointCloudManip.rotate_pcd(pcd, (0, 0, -np.pi / 2))
 
-        for i in tqdm(range(params["num_samples"])):
+        for j in tqdm(range(params["num_samples"])):
             # Augment avatar
-            back_depth_img, front_depth_img = augment_data(
-                vis, rot_pcd, params["std_angle"], params["std_cut"]
+            front_pcd, back_pcd = augment_data(
+                pcd, params["std_angle"], params["std_translate"], params["radius_constant"]
             )
 
             # Save as image
-            cv2.imwrite(
-                os.path.join(out_back_dir, name + f"_{i}.png"),
-                np.asarray(back_depth_img).round().astype(np.uint16),
+            utils.save_depth_as_image(
+                front_pcd,
+                vis,
+                os.path.join(output_dir, "front", f"{name}_{j}.png"),
+                params["scale"],
             )
-            cv2.imwrite(
-                os.path.join(out_front_dir, name + f"_{i}.png"),
-                np.asarray(front_depth_img).round().astype(np.uint16),
+            utils.save_depth_as_image(
+                back_pcd, vis, os.path.join(output_dir, "back", f"{name}_{j}.png"), params["scale"]
             )
 
     vis.destroy_window()
@@ -180,7 +198,7 @@ def main() -> None:
     """Main function"""
     args = args_parser()
 
-    avatar_list = glob.glob(args.root + "/**/*.obj", recursive=True)
+    avatar_list = glob.glob(args.root_dir + "/**/*.obj", recursive=True)
     avatar_list = list(filter(lambda x: "MAMA" not in x, avatar_list))
 
     create_synthetic_dataset(avatar_list, vars(args))

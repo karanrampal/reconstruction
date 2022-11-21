@@ -1,11 +1,12 @@
 """RGBD data loading, saving for experimentation"""
 
-import json
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import open3d as o3d
+
+from utils.utils import read_json
 
 
 class DataHandler:
@@ -36,13 +37,6 @@ class DataHandler:
         """Filter the camera serial id to keep"""
         if self.cams_to_keep:
             return {serial: val for serial, val in data.items() if serial in self.cams_to_keep}
-        return data
-
-    def _read_json(self, path: str) -> Dict[str, Any]:
-        """Read json file"""
-        with open(path, "r", encoding="utf-8") as fout:
-            data = json.load(fout)
-
         return data
 
     def _load_imgs(self, name: str, mode: str) -> Dict[str, np.ndarray]:
@@ -83,7 +77,7 @@ class DataHandler:
         if not os.path.isfile(path_):
             print(f"No {path_} such file!")
             return {}
-        data = self._read_json(path_)
+        data = read_json(path_)
 
         return self._filter_serial(data)
 
@@ -93,7 +87,7 @@ class DataHandler:
         if not os.path.isfile(path_):
             print(f"No {path_} such file!")
             return {}
-        data = self._read_json(path_)
+        data = read_json(path_)
         data_filt = self._filter_serial(data)
         out = {
             serial: np.asarray(mat["transformation_matrix"]) for serial, mat in data_filt.items()
@@ -114,7 +108,7 @@ class DataHandler:
         intrin_files = self._filter_serial(tmp)
         out = {}
         for serial, path in intrin_files.items():
-            data = self._read_json(path)
+            data = read_json(path)
             data["cx"] = data.pop("ppx")
             data["cy"] = data.pop("ppy")
             out[serial] = o3d.camera.PinholeCameraIntrinsic(**data)

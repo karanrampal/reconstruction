@@ -1,9 +1,28 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+[project]
+name = "reconstruction"
+version = "0.0.1"
+authors = [
+  { name="Karan Rampal", email="karan.rampal@hm.com" },
 ]
+description = "A project for 3D reconstruction from RGBD images"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/hm-group/reconstruction"
+"Bug Tracker" = "https://github.com/hm-group/reconstruction/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

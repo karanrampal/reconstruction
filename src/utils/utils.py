@@ -1,10 +1,28 @@
 """Utility functions"""
 
-from typing import Dict, List, Optional, Tuple
+import json
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
+
+
+def read_json(path: str) -> Dict[str, Any]:
+    """Read json file"""
+    with open(path, "r", encoding="utf-8") as fout:
+        data = json.load(fout)
+    return data
+
+
+def write_json(file_path: str, data: Dict[str, Any]) -> None:
+    """Write data to a json file
+    Args:
+        file_path: File path
+        data: Data to write
+    """
+    with open(file_path, "w", encoding="utf-8") as fout:
+        json.dump(data, fout)
 
 
 def plot_rgbd(rgb: List[np.ndarray], depth: List[np.ndarray]) -> None:
@@ -104,3 +122,22 @@ def capture_depth_from_camera(
     depth_img = visualizer.capture_depth_float_buffer()
     visualizer.clear_geometries()
     return depth_img
+
+
+def save_depth_as_image(
+    geometry: o3d.geometry.Geometry,
+    visualizer: o3d.visualization.Visualizer,
+    name_: str,
+    scale: float,
+) -> None:
+    """Capture depth image from camera buffer
+    Args:
+        geometry: Open3d geometry such as mesh or point cloud
+        visualizer: Open3d visualizer
+        scale: Scale depth image before saving
+    """
+    visualizer.add_geometry(geometry)
+    visualizer.poll_events()
+    visualizer.update_renderer()
+    visualizer.capture_depth_image(filename=name_, depth_scale=scale)
+    visualizer.clear_geometries()
