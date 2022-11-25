@@ -12,6 +12,8 @@ pandas
 torch
 torchvision
 tensorboard
+pytorch-lightning
+torchmetrics
 # CV
 opencv-python
 open3d

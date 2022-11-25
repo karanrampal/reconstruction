@@ -21,6 +21,8 @@ dependencies:
   - torchvision
   - cpuonly  # 'cudatoolkit=11.3' if you have a gpu else 'cpuonly'
   - tensorboard
+  - pytorch-lightning
+  - torchmetrics
   # CV
   - opencv
   # Others
@@ -35,6 +37,5 @@ dependencies:
   - black
   - isort
   - pip:
-    - torch-tb-profiler
     - open3d
     - pyrealsense2
