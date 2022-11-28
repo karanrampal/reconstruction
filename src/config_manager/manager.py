@@ -4,6 +4,7 @@ from typing import Dict, Union
 
 import yaml
 
+
 class Params:
     """Class to load hyperparameters from a yaml file."""
 
