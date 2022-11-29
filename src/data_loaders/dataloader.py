@@ -1,37 +1,36 @@
 """Define custom dataset class extending the Pytorch Dataset class"""
 
 import os
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
 import torchvision.transforms as tvt
 from PIL import Image
-from torch.utils.data import Dataset
+from torch.utils.data import DataLoader, Dataset
+
+from config_manager.manager import Params
 
 
 class BackPredictionDataset(Dataset):
     """Custom class for Back depth image prediction dataset
     Args:
         root: Directory containing the dataset
-        file_list: List of the train/val/test file relative to the root
-        front_img: Average front image
+        file_name: Train/val/test csv file relative to the root
         transforms: Data augmentation to be done
-    Raises:
-        Value error if mode is incorrect
     """
 
     def __init__(
         self,
         root: str,
-        file_list: List[str],
-        front_img: np.ndarray,
+        file_name: str,
         transforms: Optional[tvt.Compose] = None,
     ) -> None:
         self.root = root
-        self.file_list = file_list
+        self.file_list = pd.read_csv(os.path.join(root, file_name), header=None)
         self.transforms = transforms
-        self.front_img = front_img
+        self.front_img = np.load(os.path.join(root, "avg_front_image.npy"))
 
     def _load_img(self, path_: str, avg_img: np.ndarray) -> torch.Tensor:
         """Load image and normalzie"""
@@ -44,7 +43,7 @@ class BackPredictionDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get an item from the dataset given the index idx"""
-        im_name = self.file_list[idx]
+        im_name = self.file_list.iloc[idx][0]
         front_img = self._load_img(os.path.join(self.root, "front", im_name), self.front_img)
         back_img = self._load_img(os.path.join(self.root, "back", im_name), self.front_img)
 
@@ -66,3 +65,43 @@ class BackPredictionDataset(Dataset):
     def __len__(self) -> int:
         """Length of the dataset"""
         return len(self.file_list)
+
+
+def get_transforms(params: Params) -> tvt.Compose:
+    """Data augmentation
+    Args:
+        params: Hyper parameters
+    Returns:
+        Pytorch augmentations
+    """
+    trans = [tvt.Resize((params.resize, params.resize))]
+    return tvt.Compose(trans)
+
+
+def get_dataloaders(modes: List[str], params: Params) -> Dict[str, DataLoader]:
+    """Get DataLoader objects.
+    Args:
+        modes: Mode of operation i.e. 'train', 'test'
+        params: Hyperparameters
+    Returns:
+        DataLoader object for each mode
+    """
+    dataloaders = {}
+    trans = get_transforms(params)
+
+    for mode in modes:
+        if mode == "train":
+            dataset = BackPredictionDataset(params.data_path, "train.csv", trans)
+            shuffle = True
+        else:
+            dataset = BackPredictionDataset(params.data_path, "test.csv", trans)
+            shuffle = False
+
+        dataloaders[mode] = DataLoader(
+            dataset,
+            batch_size=params.batch_size,
+            num_workers=params.num_workers,
+            pin_memory=params.pin_memory,
+            shuffle=shuffle,
+        )
+    return dataloaders
