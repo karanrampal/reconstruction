@@ -10,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from config_manager.manager import Params
+from model.net import BPModel
 
 
 def train_per_epoch(
@@ -101,10 +102,10 @@ def train_evaluate(
         train and test losses
     """
     writer = SummaryWriter(params.tb_path)
+    images, _, _ = next(iter(dataloader["train"]))
+    writer.add_graph(BPModel(params.filters, params.kernels, params.embeddings), images)
 
     net = net.to(params.device)
-    images, _, _ = next(iter(dataloader["train"]))
-    writer.add_graph(net, images.to(params.device))
 
     best_loss = 100.0
     train_loss, test_loss = [], []
