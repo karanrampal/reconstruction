@@ -33,10 +33,9 @@ def train_per_epoch(
     net.train()
 
     epoch_loss = []
-    for inputs, labels, mask in tqdm(train_dataloader):
+    for inputs, labels in tqdm(train_dataloader):
         inputs = inputs.to(params.device)
         labels = labels.to(params.device)
-        mask = mask.to(params.device)
 
         optimizer.zero_grad()
         outputs = net(inputs)
@@ -68,10 +67,9 @@ def evaluate(
 
     epoch_loss = []
     with torch.no_grad():
-        for images, labels, mask in test_dataloader:
+        for images, labels in test_dataloader:
             images = images.to(params.device)
             labels = labels.to(params.device)
-            mask = mask.to(params.device)
 
             outputs = net(images)
             label_outputs = net(labels)
@@ -102,7 +100,7 @@ def train_evaluate(
         train and test losses
     """
     writer = SummaryWriter(params.tb_path)
-    images, _, _ = next(iter(dataloader["train"]))
+    images, _ = next(iter(dataloader["train"]))
     writer.add_graph(BPModel(params.filters, params.kernels, params.embeddings), images)
 
     net = net.to(params.device)
