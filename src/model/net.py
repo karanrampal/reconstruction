@@ -32,7 +32,7 @@ class BPModel(torch.nn.Module):
         # Decoder
         self.decoder = self._decoder(filters, kernels)
         self.dconv1 = self._up_conv_relu(filters[2], filters[1], kernels[1], kernels[1] // 2)
-        self.dconv2 = self._up_conv_relu(filters[1], filters[0], kernels[0], kernels[0] // 2)
+        self.dconv2 = self._up_conv_sigmoid(filters[1], filters[0], kernels[0], kernels[0] // 2)
 
     def _down_conv_bn_relu(
         self, in_filter: int, out_filter: int, kernel: int, pad: int
@@ -88,6 +88,22 @@ class BPModel(torch.nn.Module):
                 output_padding=1,
             ),
             torch.nn.ReLU(),
+        )
+
+    def _up_conv_sigmoid(
+        self, in_filter: int, out_filter: int, kernel: int, pad: int
+    ) -> torch.nn.Sequential:
+        """Helper function for creating up convolution layer"""
+        return torch.nn.Sequential(
+            torch.nn.ConvTranspose2d(
+                in_filter,
+                out_filter,
+                kernel_size=kernel,
+                stride=2,
+                padding=pad,
+                output_padding=1,
+            ),
+            torch.nn.Sigmoid(),
         )
 
     def _decoder(self, filters: List[int], kernels: List[int]) -> torch.nn.Sequential:
