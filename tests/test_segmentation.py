@@ -12,7 +12,7 @@ def test_segmentation_init() -> None:
     params = next(seg.model.parameters())
 
     assert not seg.model.training
-    assert seg.device == params.device.type
+    assert seg.device == params.device
 
 
 def test_apply_mask_exceptions() -> None:

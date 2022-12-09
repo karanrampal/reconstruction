@@ -14,7 +14,7 @@ class Segmentation:
     """Segment person using maskrcnn"""
 
     def __init__(self) -> None:
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.weights = MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT
         self.transforms = self.weights.transforms()
         model = maskrcnn_resnet50_fpn_v2(weights=self.weights, progress=False)
