@@ -29,10 +29,6 @@ class BPModel(torch.nn.Module):
 
         # Decoder
         self.decoder = self._decoder(filters, kernels)
-        self.dconv1 = layer.trans_conv_relu(filters[2], filters[1], kernels[1], 2, kernels[1] // 2)
-        self.dconv2 = layer.trans_conv_sigmoid(
-            filters[1], filters[0], kernels[0], 2, kernels[0] // 2
-        )
 
     def _encoder(self, filters: List[int], kernels: List[int]) -> torch.nn.Sequential:
         """Encoder helper function"""
@@ -48,6 +44,10 @@ class BPModel(torch.nn.Module):
             layer.trans_conv_bn_relu(filters[i + 1], filters[i], kernels[i], 2, kernels[i] // 2)
             for i in range(len(kernels) - 1, 1, -1)
         ]
+        layers += [
+            layer.trans_conv_relu(filters[2], filters[1], kernels[1], 2, kernels[1] // 2),
+            layer.trans_conv_sigmoid(filters[1], filters[0], kernels[0], 2, kernels[0] // 2),
+        ]
         return torch.nn.Sequential(*layers)
 
     def forward(self, x_inp: torch.Tensor) -> torch.Tensor:
@@ -57,11 +57,9 @@ class BPModel(torch.nn.Module):
 
         x_inp = self.fc1(x_inp)
         x_inp = self.fc2(x_inp)
-        x_inp = x_inp.reshape(-1, 256, 4, 4)
 
-        x_inp = self.decoder(x_inp)
-        x_inp = self.dconv1(x_inp)
-        out = self.dconv2(x_inp)
+        x_inp = x_inp.reshape(-1, 256, 4, 4)
+        out = self.decoder(x_inp)
 
         return out
 
