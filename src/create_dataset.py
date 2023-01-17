@@ -171,7 +171,7 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
         mesh.compute_vertex_normals()
 
         # Convert to pcd
-        pcd = mesh.sample_points_uniformly(number_of_points=params["num_points"])
+        pcd = mesh.sample_points_poisson_disk(number_of_points=params["num_points"])
         pcd = PointCloudManip.rotate_pcd(pcd, (0, 0, -np.pi / 2))
 
         for j in tqdm(range(params["num_samples"])):
