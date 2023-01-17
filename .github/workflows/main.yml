@@ -38,18 +38,24 @@ jobs:
         run: make install_ci
       - name: Unit testing
         run: make test
-      - uses: hm-actions/run-sonarqube-scan@v1
+      - uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  ASIT:
+  CodeQL:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read # Gives permission to read actions.
+      contents: read # Gives permission to read your code.
+      security-events: write # Gives permission to create code scanning alerts.
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v3
-      - name: Run advanced-security-issue-tracker
-        uses: hm-actions/advanced-security-issue-tracker@v1
         with:
-          webhook: ${{secrets.WEBHOOK_URI}}
-          token: ${{secrets.PERSONAL_ACCESS_TOKEN}}
+          fetch-depth: 0
+      - name: "Run code vulnerability scan"
+        uses: hm-actions/run-code-vulnerability-scan@v1
+        with:
+          teams-webhook: ${{secrets.WEBHOOK_URI}}
+          access-token: ${{secrets.PERSONAL_ACCESS_TOKEN}}

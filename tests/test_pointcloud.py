@@ -19,7 +19,7 @@ def test_segment_out_plane() -> None:
     pcd = o3d.geometry.PointCloud()
     with pytest.raises(ValueError) as err:
         PointCloudManip.segment_out_plane(pcd)
-    assert str(err.value) == "Point cloud is empty!"
+    assert str(err.value) == "No points in point cloud!"
 
 
 def test_crop_pcd() -> None:
@@ -27,4 +27,4 @@ def test_crop_pcd() -> None:
     pcd = o3d.geometry.PointCloud()
     with pytest.raises(ValueError) as err:
         PointCloudManip.crop_pcd(pcd, (1.0, 2.0, 3.0), (1.0, 2.0, 3.0))
-    assert str(err.value) == "Point cloud is empty!"
+    assert str(err.value) == "Point cloud doesn't contain points!"
