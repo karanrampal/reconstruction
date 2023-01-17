@@ -91,7 +91,7 @@ class PointCloudManip:
             Segmented point cloud
         """
         if pcd.is_empty():
-            raise ValueError("Point cloud is empty!")
+            raise ValueError("No points in point cloud!")
 
         _, inliers = pcd.segment_plane(
             distance_threshold=thr, ransac_n=ransac_n, num_iterations=num_iterations
@@ -115,7 +115,7 @@ class PointCloudManip:
             Cropped point cloud
         """
         if pcd.is_empty():
-            raise ValueError("Point cloud is empty!")
+            raise ValueError("Point cloud doesn't contain points!")
         assert len(min_bound) == 3, "Min bounds for x,y,z required"
         assert len(max_bound) == 3, "Max bounds for x,y,z required"
 
