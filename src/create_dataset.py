@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import open3d as o3d
 from numpy.random import MT19937, RandomState, SeedSequence
+from scipy.signal import medfilt2d
 from tqdm import tqdm
 
 from pointcloud.pointcloud import PointCloudManip
@@ -57,6 +58,7 @@ def args_parser() -> argparse.Namespace:
         default=1000,
         help="Constant for radius of spherical projection",
     )
+    parser.add_argument("--kernel_size", type=int, default=3, help="Median filter kernel size")
     return parser.parse_args()
 
 
@@ -171,7 +173,7 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
         mesh.compute_vertex_normals()
 
         # Convert to pcd
-        pcd = mesh.sample_points_uniformly(number_of_points=params["num_points"])
+        pcd = mesh.sample_points_poisson_disk(number_of_points=params["num_points"])
         pcd = PointCloudManip.rotate_pcd(pcd, (0, 0, -np.pi / 2))
 
         for j in tqdm(range(params["num_samples"])):
@@ -194,6 +196,19 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
     vis.destroy_window()
 
 
+def post_processing(params: Dict[str, Any]) -> None:
+    """Post process the images e.g. median filter to remove holes
+    Args:
+        params: Hyper-parameters
+    """
+    print("\nPost processing images ...")
+    out_file_list = glob.glob(params["output_dir"] + "/**/*.png", recursive=True)
+    for i in tqdm(out_file_list):
+        img = o3d.io.read_image(i)
+        im_filt = medfilt2d(img, kernel_size=params["kernel_size"])
+        o3d.io.write_image(i, o3d.geometry.Image(im_filt))
+
+
 def main() -> None:
     """Main function"""
     args = args_parser()
@@ -202,6 +217,7 @@ def main() -> None:
     avatar_list = list(filter(lambda x: "MAMA" not in x, avatar_list))
 
     create_synthetic_dataset(avatar_list, vars(args))
+    post_processing(vars(args))
 
 
 if __name__ == "__main__":
