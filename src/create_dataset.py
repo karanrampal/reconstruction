@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import open3d as o3d
 from numpy.random import MT19937, RandomState, SeedSequence
-from scipy.signal import medfilt2d
+from scipy.signal import convolve2d, medfilt2d
 from tqdm import tqdm
 
 from pointcloud.pointcloud import PointCloudManip
@@ -62,21 +62,20 @@ def args_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def create_synthetic_data_folders(output_dir: str) -> str:
+def create_synthetic_data_folders(params: Dict[str, Any]) -> None:
     """Create folder structure for synthetic dataset
     Args:
-        output_dir: Output directory
-        class_id: Class id of the avatar
-    Returns:
-        Names of the front and back output directories
+        params: Hyper parameters
     """
-    output_dir = os.path.join(output_dir, time.strftime("dataset_%Y%m%d-%H%M%S"))
+    params["output_dir"] = os.path.join(
+        params["output_dir"], time.strftime("dataset_%Y%m%d-%H%M%S")
+    )
 
-    os.makedirs(os.path.join(output_dir, "back"), exist_ok=True)
+    os.makedirs(os.path.join(params["output_dir"], "back"), exist_ok=True)
+    os.makedirs(os.path.join(params["output_dir"], "back_normals"), exist_ok=True)
 
-    os.makedirs(os.path.join(output_dir, "front"), exist_ok=True)
-
-    return output_dir
+    os.makedirs(os.path.join(params["output_dir"], "front"), exist_ok=True)
+    os.makedirs(os.path.join(params["output_dir"], "front_normals"), exist_ok=True)
 
 
 def save_camera_params(
@@ -154,14 +153,14 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
     if not avatar_list:
         raise ValueError("Avatar list is empty!")
 
-    output_dir = create_synthetic_data_folders(params["output_dir"])
+    create_synthetic_data_folders(params)
 
     vis = o3d.visualization.Visualizer()
     vis.create_window(width=params["width"], height=params["height"], visible=False)
 
     # Save camera parameters
     control = vis.get_view_control().convert_to_pinhole_camera_parameters()
-    save_camera_params(output_dir, control, params["scale"])
+    save_camera_params(params["output_dir"], control, params["scale"])
 
     for avatar in avatar_list:
         # Create output dirs
@@ -186,11 +185,14 @@ def create_synthetic_dataset(avatar_list: List[str], params: Dict[str, Any]) -> 
             utils.save_depth_as_image(
                 front_pcd,
                 vis,
-                os.path.join(output_dir, "front", f"{name}_{j}.png"),
+                os.path.join(params["output_dir"], "front", f"{name}_{j}.png"),
                 params["scale"],
             )
             utils.save_depth_as_image(
-                back_pcd, vis, os.path.join(output_dir, "back", f"{name}_{j}.png"), params["scale"]
+                back_pcd,
+                vis,
+                os.path.join(params["output_dir"], "back", f"{name}_{j}.png"),
+                params["scale"],
             )
 
     vis.destroy_window()
@@ -209,6 +211,34 @@ def post_processing(params: Dict[str, Any]) -> None:
         o3d.io.write_image(i, o3d.geometry.Image(im_filt))
 
 
+def calculate_normal_vectors(params: Dict[str, Any]) -> None:
+    """Calculate normal vectors for the depth image
+    Args:
+        params: Hyper-parameters
+    """
+    print("\nNormal vector calculation ...")
+    out_file_list = glob.glob(params["output_dir"] + "/**/*.png", recursive=True)
+
+    grady = np.array([-1, 0, 1]).reshape(-1, 1)
+    gradx = grady.T
+    normal = np.zeros((params["height"], params["width"], 3), dtype=np.float32)
+    normal[:, :, -1] = -1.0
+
+    for i in tqdm(out_file_list):
+        img = o3d.io.read_image(i)
+
+        normal[:, :, 0] = -convolve2d(img, gradx, mode="same")
+        normal[:, :, 1] = -convolve2d(img, grady, mode="same")
+        denom = np.expand_dims(np.linalg.norm(normal, axis=-1), -1)
+        denom[denom == 0.0] = 1.0
+        normal /= denom
+
+        path_ = os.path.join(
+            os.path.dirname(i) + "_normals", os.path.basename(i).replace(".png", ".npy")
+        )
+        np.save(path_, normal)
+
+
 def main() -> None:
     """Main function"""
     args = args_parser()
@@ -218,6 +248,7 @@ def main() -> None:
 
     create_synthetic_dataset(avatar_list, vars(args))
     post_processing(vars(args))
+    calculate_normal_vectors(vars(args))
 
 
 if __name__ == "__main__":
