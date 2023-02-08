@@ -72,10 +72,8 @@ def create_synthetic_data_folders(params: Dict[str, Any]) -> None:
     )
 
     os.makedirs(os.path.join(params["output_dir"], "back"), exist_ok=True)
-    os.makedirs(os.path.join(params["output_dir"], "back_normals"), exist_ok=True)
 
     os.makedirs(os.path.join(params["output_dir"], "front"), exist_ok=True)
-    os.makedirs(os.path.join(params["output_dir"], "front_normals"), exist_ok=True)
 
 
 def save_camera_params(
@@ -233,9 +231,7 @@ def calculate_normal_vectors(params: Dict[str, Any]) -> None:
         denom[denom == 0.0] = 1.0
         normal /= denom
 
-        path_ = os.path.join(
-            os.path.dirname(i) + "_normals", os.path.basename(i).replace(".png", ".npy")
-        )
+        path_ = os.path.join(os.path.dirname(i), os.path.basename(i).replace(".png", ".npy"))
         np.save(path_, normal)
 
 
