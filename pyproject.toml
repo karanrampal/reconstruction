@@ -2,7 +2,7 @@
 name = "reconstruction"
 version = "0.0.1"
 authors = [
-  { name="Karan Rampal", email="karan.rampal@hm.com" },
+  { name="Karan Rampal", email="karanrampal87@gmail.com" },
 ]
 description = "A project for 3D reconstruction from RGBD images"
 readme = "README.md"
@@ -14,8 +14,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/hm-group/reconstruction"
-"Bug Tracker" = "https://github.com/hm-group/reconstruction/issues"
+"Homepage" = "https://github.com/karanrampal/reconstruction"
+"Bug Tracker" = "https://github.com/karanrampal/reconstruction/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -32,6 +32,7 @@ show_error_codes = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+disable_error_code = ["attr-defined"]
 
 [tool.pylint."MASTER"]
 ignore = [".ipynb_checkpoints"]
@@ -39,6 +40,10 @@ ignore = [".ipynb_checkpoints"]
 [tool.pylint."TYPECHECK"]
 generated-members = ["torch"]
 ignored-modules = ["open3d", "cv2"]
+
+[tool.pylint."DESIGN"]
+max-locals = 22
+max-args = 7
 
 [tool.isort]
 profile = "black"
