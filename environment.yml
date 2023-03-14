@@ -2,6 +2,7 @@ name: cv3d-env
 channels:
   - conda-forge
   - pytorch
+  - nvidia
 dependencies:
   # System related
   - python=3.8
@@ -19,10 +20,8 @@ dependencies:
   # Deep learning
   - pytorch
   - torchvision
-  - cpuonly  # 'cudatoolkit=11.3' if you have a gpu else 'cpuonly'
+  - pytorch-cuda=11.6  # 'pytorch-cuda=11.6' if you have a gpu else 'cpuonly'
   - tensorboard
-  - pytorch-lightning
-  - torchmetrics
   # CV
   - opencv
   # Others
