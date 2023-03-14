@@ -150,8 +150,8 @@ def train_evaluate(
     """
     print("Writing graph ...")
     writer = SummaryWriter(params.save_path)
-    # images, _, _ = next(iter(dataloader["train"]))
-    # writer.add_graph(base_model, images)
+    images, _, _ = next(iter(dataloader["train"]))
+    writer.add_graph(base_model, images)
 
     net.to(torch.device(params.device))
     vgg, preprocess = get_style_net(params)
