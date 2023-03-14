@@ -1,6 +1,6 @@
 """Unet implementation"""
 
-from typing import List
+from typing import List, Tuple
 
 import torch
 
@@ -17,85 +17,103 @@ class UnetUp(torch.nn.Module):
 
     def __init__(self, in_filter: int, out_filter: int, kernel: int) -> None:
         super().__init__()
-        self.up_conv = layer.UpConvBnActLayer(
+        self.up_conv = layer.UpPConvBnActLayer(
             2.0,
-            "batch",
-            "relu",
+            "identity",
+            "identity",
             in_filter=in_filter,
-            out_filter=in_filter // 2,
+            out_filter=out_filter,
             kernel=kernel,
             stride=1,
             pad=kernel // 2,
+            num_groups=2,
         )
-        self.conv = layer.ConvBnActLayer(
-            "batch", "relu", in_filter=in_filter, out_filter=out_filter, kernel=3, stride=1, pad=1
+        self.conv = layer.PConvBnActLayer(  # layer.ResLayer(
+            "group",
+            "leaky",
+            in_filter=out_filter * 2,
+            out_filter=out_filter,
+            kernel=3,
+            stride=1,
+            pad=1,
+            num_groups=out_filter,
         )
 
-    def forward(self, x_small: torch.Tensor, x_big: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, x_small: torch.Tensor, x_big: torch.Tensor, m_big: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward propagation"""
-        x_up = self.up_conv(x_small)
+        x_up, mask = self.up_conv(x_small, m_big)
         xcat = torch.cat([x_up, x_big], dim=1)
-        return self.conv(xcat)
+        out, mask = self.conv(xcat, mask)
+        return out, mask
 
 
 class UNet(torch.nn.Module):
-    """UNet archtecture"""
+    """UNet archtecture
+    Args:
+        input_channel: Input channels
+        output_channel: Output channels
+        filters: List of output channels
+        kernels: List of kernel size
+    """
 
-    def __init__(self, filters: List[int], kernels: List[int]) -> None:
+    def __init__(
+        self, input_channel: int, output_channel: int, filters: List[int], kernels: List[int]
+    ) -> None:
         super().__init__()
-        filters = [filters[0] // 2] + filters
-
         enc = [
-            layer.ConvBnActLayer(
-                "batch",
-                "relu",
-                in_filter=1,
+            layer.PConvBnActLayer(
+                "identity",
+                "leaky",
+                in_filter=input_channel,
                 out_filter=filters[0],
                 kernel=kernels[0],
                 stride=1,
                 pad=kernels[0] // 2,
+                num_groups=2,
             )
         ]
         enc += [
-            layer.ConvBnActLayer(
-                "batch",
-                "relu",
-                in_filter=filters[i],
-                out_filter=filters[i + 1],
+            layer.PConvBnActLayer(
+                # layer.ResLayer(
+                "group",
+                "leaky",
+                in_filter=filters[i - 1],
+                out_filter=filters[i],
                 kernel=kernels[i],
                 stride=2,
                 pad=kernels[i] // 2,
+                num_groups=filters[i],
             )
-            for i in range(len(kernels))
+            for i in range(1, len(kernels))
         ]
         self.encoder = torch.nn.ModuleList(enc)
 
         self.decoder = torch.nn.ModuleList(
-            [
-                UnetUp(filters[i + 1], filters[i], kernels[i])
-                for i in range(len(kernels) - 1, -1, -1)
-            ]
+            [UnetUp(filters[i], filters[i - 1], 3) for i in reversed(range(1, len(filters)))]
         )
 
         self.out_conv = layer.ConvBnActLayer(
             "identity",
-            "relu",
+            "sigmoid",
             in_filter=filters[0],
-            out_filter=1,
-            kernel=1,
+            out_filter=output_channel,
+            kernel=3,
             stride=1,
-            pad=0,
+            pad=1,
+            num_groups=1,
         )
 
-    def forward(self, x_t: torch.Tensor) -> torch.Tensor:
+    def forward(self, x_t: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """Forward propagation"""
-        enc_trace = []
+        enc_trace, mask_trace = [], []
         for enc_layer in self.encoder:
-            x_t = enc_layer(x_t)
+            x_t, mask = enc_layer(x_t, mask)
             enc_trace.append(x_t)
+            mask_trace.append(mask)
 
-        out = enc_trace[-1]
         for i, dec_layer in enumerate(self.decoder):
-            out = dec_layer(out, enc_trace[-i - 2])
+            x_t, mask = dec_layer(x_t, enc_trace[-i - 2], mask_trace[-i - 2])
 
-        return self.out_conv(out)
+        return self.out_conv(x_t)

@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import open3d as o3d
 from numpy.random import MT19937, RandomState, SeedSequence
-from scipy.signal import convolve2d
 from scipy.ndimage import grey_dilation
+from scipy.signal import convolve2d
 from tqdm import tqdm
 
 from pointcloud.pointcloud import PointCloudManip
